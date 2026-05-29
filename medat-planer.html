@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Med-AT Planer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #e8ff47;
+    --accent2: #47c8ff;
+    --accent3: #ff6b47;
+    --text: #f0f0f8;
+    --muted: #6b6b88;
+    --success: #47ffb2;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    padding-bottom: 100px;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 48px 24px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(232,255,71,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+
+  .date-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .countdown-badge {
+    background: var(--accent);
+    color: #0a0a0f;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    letter-spacing: 0.02em;
+    line-height: 0.95;
+    color: var(--text);
+  }
+
+  .header h1 span {
+    color: var(--accent);
+  }
+
+  .progress-bar-wrap {
+    margin-top: 16px;
+    background: var(--surface2);
+    border-radius: 4px;
+    height: 4px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  .progress-label span {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 24px;
+    margin-bottom: 24px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0f;
+    font-weight: 600;
+  }
+
+  /* SECTIONS */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ROUTINE SECTION */
+  .routine-header {
+    padding: 0 24px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .routine-header h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.05em;
+  }
+
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  .time-blocks {
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .time-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .time-block::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .time-block.done {
+    opacity: 0.5;
+  }
+
+  .time-block.done::before { opacity: 1; }
+
+  .time-block.done .block-title {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .block-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 70px;
+  }
+
+  .block-emoji {
+    font-size: 18px;
+    min-width: 24px;
+    text-align: center;
+  }
+
+  .block-content { flex: 1; }
+
+  .block-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    transition: color 0.2s;
+  }
+
+  .block-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .check-circle {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    font-size: 12px;
+  }
+
+  .time-block.done .check-circle {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0f;
+  }
+
+  .category-learn { border-left: none; }
+  .category-learn::before { background: var(--accent2); }
+  .category-sport::before { background: var(--accent3); }
+  .category-sleep::before { background: #9b59b6; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: flex;
+    gap: 8px;
+    padding: 16px 24px 0;
+  }
+
+  .stat-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* 5-WEEK PLAN */
+  .weeks-wrap { padding: 0 24px; }
+
+  .week-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+
+  .week-card.current {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(232,255,71,0.08);
+  }
+
+  .week-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+
+  .week-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .week-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--muted);
+    line-height: 1;
+  }
+
+  .week-card.current .week-num { color: var(--accent); }
+
+  .week-info h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .week-info .week-dates {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .week-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .week-card.current .week-badge {
+    background: var(--accent);
+    color: #0a0a0f;
+    border-color: var(--accent);
+  }
+
+  .week-body {
+    padding: 0 16px 14px;
+    display: none;
+  }
+
+  .week-body.open { display: block; }
+
+  .week-focus {
+    font-size: 12px;
+    color: var(--accent2);
+    font-weight: 500;
+    margin-bottom: 10px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .day-plan {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .day-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 10px;
+    background: var(--surface2);
+    border-radius: 8px;
+  }
+
+  .day-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    min-width: 28px;
+    padding-top: 1px;
+  }
+
+  .day-tasks {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .day-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-weight: 500;
+  }
+
+  .tag-learn { background: rgba(71,200,255,0.15); color: var(--accent2); }
+  .tag-sport { background: rgba(255,107,71,0.15); color: var(--accent3); }
+  .tag-rest { background: rgba(107,107,136,0.15); color: var(--muted); }
+  .tag-exam { background: rgba(232,255,71,0.15); color: var(--accent); }
+
+  /* FOCUS SECTION */
+  .focus-wrap { padding: 0 24px; }
+
+  .tip-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  .tip-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tip-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .tip-card ul {
+    margin-top: 8px;
+    padding-left: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .tip-card ul li {
+    font-size: 12px;
+    color: var(--muted);
+    padding-left: 14px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .tip-card ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 10px;
+  }
+
+  .highlight-box {
+    background: rgba(232,255,71,0.06);
+    border: 1px solid rgba(232,255,71,0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 8px;
+  }
+
+  .highlight-box p {
+    font-size: 12px;
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    line-height: 1.5;
+  }
+
+  /* NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    padding: 12px 24px 28px;
+    display: flex;
+    gap: 4px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 10px 4px 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+  }
+
+  .nav-icon { font-size: 20px; }
+
+  .nav-label {
+    font-size: 9px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    transition: color 0.2s;
+  }
+
+  .nav-btn.active .nav-label { color: var(--accent); }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section.active { animation: fadeIn 0.25s ease; }
+
+  .time-block:active { transform: scale(0.98); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <span class="date-label" id="dateLabel">Heute</span>
+    <span class="countdown-badge" id="countdownBadge">⏳ Loading...</span>
+  </div>
+  <h1>MED<span>AT</span><br>PLANER</h1>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="dailyProgress" style="width: 0%"></div>
+  </div>
+  <div class="progress-label">
+    <span id="progressText">0 / 0 erledigt</span>
+    <span id="progressPct">0%</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('routine')">📋 Heute</button>
+  <button class="tab" onclick="showTab('weeks')">📅 5 Wochen</button>
+  <button class="tab" onclick="showTab('focus')">🧠 Tipps</button>
+</div>
+
+<!-- ROUTINE -->
+<div id="routine" class="section active">
+  <div class="routine-header">
+    <h2>TAGESPLAN</h2>
+    <button class="reset-btn" onclick="resetDay()">↺ Reset</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="statDone">0</div>
+      <div class="stat-label">ERLEDIGT</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statLeft">0</div>
+      <div class="stat-label">OFFEN</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statStreak">0</div>
+      <div class="stat-label">STREAK 🔥</div>
+    </div>
+  </div>
+
+  <div class="time-blocks" id="blocksContainer"></div>
+</div>
+
+<!-- 5 WEEKS -->
+<div id="weeks" class="section">
+  <div class="weeks-wrap" id="weeksContainer"></div>
+</div>
+
+<!-- FOCUS TIPS -->
+<div id="focus" class="section">
+  <div class="focus-wrap">
+    <div class="tip-card">
+      <h3>📵 Handy-Regeln</h3>
+      <ul>
+        <li>Morgens erst nach erstem Lernblock aufs Handy</li>
+        <li>Instagram/TikTok: max. 20 Min/Tag (Limit setzen)</li>
+        <li>Beim Lernen → Handy physisch in anderem Zimmer</li>
+        <li>Wenn du scrollst: 5 Liegestütze als Unterbrechung</li>
+      </ul>
+    </div>
+    <div class="tip-card">
+      <h3>📚 Lern-Methodik</h3>
+      <ul>
+        <li><strong style="color:var(--text)">Active Recall:</strong> Buch zu, aus dem Gedächtnis erklären</li>
+        <li><strong style="color:var(--text)">Spaced Repetition:</strong> Anki für Fakten nutzen</li>
+        <li><strong style="color:var(--text)">Pomodoro:</strong> 25 min Fokus, 5 min Pause</li>
+        <li><strong style="color:var(--text)">Laut erklären:</strong> Als würdest du jemanden unterrichten</li>
+      </ul>
+    </div>
+    <div class="tip-card">
+      <h3>🏋️ Sport & Gehirn</h3>
+      <p>Sport ist kein Luxus – er steigert Konzentration & Merkfähigkeit nachweislich. Mindestens 30 Min täglich. Nie verhandelbar.</p>
+      <div class="highlight-box">
+        <p>Gym Di + Do → Ausdauer Mo, Mi, Fr<br>Sa = lange Triathlon-Einheit (60–90 min)<br>So = Erholung oder leichtes Schwimmen</p>
+      </div>
+    </div>
+    <div class="tip-card">
+      <h3>🧘 Mindset</h3>
+      <ul>
+        <li>Ein mittelmäßiger Tag nach Plan schlägt jeden perfekten Tag ohne Struktur</li>
+        <li>Sonntags 15 Min: 3 Lernziele für die Woche festlegen</li>
+        <li>Fehler analysieren, nicht ärgern – jede falsche Antwort = Lernfortschritt</li>
+        <li>Schlaf ist Teil der Prüfungsvorbereitung, keine Verschwendung</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- DATA ----
+const routineBlocks = [
+  { id: 'wake', time: '06:15', emoji: '☀️', title: 'Aufstehen', sub: 'Wasser trinken – kein Handy!', cat: '' },
+  { id: 'sport', time: '06:30–07:15', emoji: '🏃', title: 'Sport / Triathlon', sub: 'Laufen, Rad oder Schwimmen', cat: 'sport' },
+  { id: 'morning', time: '07:15–07:45', emoji: '🍳', title: 'Morgenroutine', sub: 'Duschen, Frühstück, vorbereiten', cat: '' },
+  { id: 'school', time: '08:00–13:10', emoji: '🏫', title: 'Schule', sub: 'Präsent bleiben, aktiv mitmachen', cat: '' },
+  { id: 'lunch', time: '13:30–14:00', emoji: '🥗', title: 'Mittagessen + Pause', sub: 'Kein Scrollen! Echte Erholung', cat: '' },
+  { id: 'learn1', time: '14:00–16:00', emoji: '📗', title: 'Lernblock 1', sub: 'Schwieriger Stoff – Bio, Chemie, Mathe', cat: 'learn' },
+  { id: 'break', time: '16:00–16:15', emoji: '🚶', title: 'Kurze Pause', sub: 'Spaziergang, Snack, frische Luft', cat: '' },
+  { id: 'learn2', time: '16:15–17:45', emoji: '📘', title: 'Lernblock 2', sub: 'Übungsaufgaben & Med-AT Fragen', cat: 'learn' },
+  { id: 'gym', time: '18:15–19:00', emoji: '🏋️', title: 'Gym (Di + Do)', sub: 'Krafttraining – alternativ Cardio', cat: 'sport' },
+  { id: 'dinner', time: '19:00–20:00', emoji: '🍽️', title: 'Abendessen & Entspannung', sub: 'Familie, keine Schuldgefühle', cat: '' },
+  { id: 'learn3', time: '20:00–20:30', emoji: '📙', title: 'Lernblock 3', sub: 'Wiederholung – Flashcards, leichter Stoff', cat: 'learn' },
+  { id: 'nophone', time: '21:30', emoji: '📵', title: 'Handy weg', sub: 'Abendroutine starten', cat: '' },
+  { id: 'sleep', time: '22:00', emoji: '🌙', title: 'Schlafen', sub: '8h Schlaf = mehr Lernleistung', cat: 'sleep' },
+];
+
+const weeksData = [
+  {
+    num: 1,
+    title: 'Aufwärmen & Struktur aufbauen',
+    dates: '29. Mai – 4. Juni',
+    focus: '→ GRUNDLAGEN: Biologie Basics, Chemie Einheiten',
+    current: true,
+    days: [
+      { name: 'Mo', tasks: [{l:'Zellbiologie', t:'learn'},{l:'Laufen 35min', t:'sport'}] },
+      { name: 'Di', tasks: [{l:'Chemie Atom', t:'learn'},{l:'Gym', t:'sport'}] },
+      { name: 'Mi', tasks: [{l:'Organische Chemie', t:'learn'},{l:'Radfahren', t:'sport'}] },
+      { name: 'Do', tasks: [{l:'Wiederholung', t:'learn'},{l:'Gym', t:'sport'}] },
+      { name: 'Fr', tasks: [{l:'Physik Intro', t:'learn'},{l:'Schwimmen', t:'sport'}] },
+      { name: 'Sa', tasks: [{l:'Med-AT Probefragen', t:'exam'},{l:'Triathlon 60min', t:'sport'}] },
+      { name: 'So', tasks: [{l:'Wochenplan erstellen', t:'exam'},{l:'Erholung', t:'rest'}] },
+    ]
+  },
+  {
+    num: 2,
+    title: 'Intensivierung',
+    dates: '5. – 11. Juni',
+    focus: '→ AUFBAUEN: Genetik, Säure-Base, Mechanik',
+    current: false,
+    days: [
+      { name: 'Mo', tasks: [{l:'Genetik', t:'learn'},{l:'Laufen 40min', t:'sport'}] },
+      { name: 'Di', tasks: [{l:'Säure-Base', t:'learn'},{l:'Gym', t:'sport'}] },
+      { name: 'Mi', tasks: [{l:'Mechanik', t:'learn'},{l:'Rad 45min', t:'sport'}] },
+      { name: 'Do', tasks: [{l:'Probefragen Mix', t:'exam'},{l:'Gym', t:'sport'}] },
+      { name: 'Fr', tasks: [{l:'Schwache Themen', t:'learn'},{l:'Schwimmen', t:'sport'}] },
+      { name: 'Sa', tasks: [{l:'Vollständiger Probetest', t:'exam'},{l:'Triathlon 75min', t:'sport'}] },
+      { name: 'So', tasks: [{l:'Fehleranalyse', t:'exam'},{l:'Erholung', t:'rest'}] },
+    ]
+  },
+  {
+    num: 3,
+    title: 'Tiefen-Durchgang',
+    dates: '12. – 18. Juni',
+    focus: '→ VERTIEFEN: Alle Fachbereiche gleichmäßig',
+    current: false,
+    days: [
+      { name: 'Mo', tasks: [{l:'Biochemie', t:'learn'},{l:'Laufen', t:'sport'}] },
+      { name: 'Di', tasks: [{l:'Elektrochemie', t:'learn'},{l:'Gym', t:'sport'}] },
+      { name: 'Mi', tasks: [{l:'Thermodynamik', t:'learn'},{l:'Rad', t:'sport'}] },
+      { name: 'Do', tasks: [{l:'Timed Fragen', t:'exam'},{l:'Gym', t:'sport'}] },
+      { name: 'Fr', tasks: [{l:'Physiologie', t:'learn'},{l:'Schwimmen', t:'sport'}] },
+      { name: 'Sa', tasks: [{l:'Probetest unter Bedingungen', t:'exam'},{l:'Triathlon 80min', t:'sport'}] },
+      { name: 'So', tasks: [{l:'Wochenreview', t:'exam'},{l:'Leichter Sport', t:'rest'}] },
+    ]
+  },
+  {
+    num: 4,
+    title: 'Probeprüfungen',
+    dates: '19. – 25. Juni',
+    focus: '→ SIMULATION: Reale Prüfungsbedingungen üben',
+    current: false,
+    days: [
+      { name: 'Mo', tasks: [{l:'Probetest 1 (2h)', t:'exam'},{l:'Laufen', t:'sport'}] },
+      { name: 'Di', tasks: [{l:'Fehler auswerten', t:'learn'},{l:'Gym', t:'sport'}] },
+      { name: 'Mi', tasks: [{l:'Probetest 2 (2h)', t:'exam'},{l:'Schwimmen', t:'sport'}] },
+      { name: 'Do', tasks: [{l:'Schwachstellen', t:'learn'},{l:'Gym', t:'sport'}] },
+      { name: 'Fr', tasks: [{l:'Probetest 3 (2h)', t:'exam'},{l:'Laufen locker', t:'sport'}] },
+      { name: 'Sa', tasks: [{l:'Gesamtanalyse', t:'exam'},{l:'Triathlon 60min', t:'sport'}] },
+      { name: 'So', tasks: [{l:'Top-3 Schwächen', t:'exam'},{l:'Erholung', t:'rest'}] },
+    ]
+  },
+  {
+    num: 5,
+    title: 'Feinschliff & Ruhe',
+    dates: '26. Juni – 3. Juli',
+    focus: '→ FINAL: Wiederholen, nicht neu lernen!',
+    current: false,
+    days: [
+      { name: 'Mo', tasks: [{l:'Flashcard-Marathon', t:'learn'},{l:'Leichter Lauf', t:'sport'}] },
+      { name: 'Di', tasks: [{l:'Kernthemen recap', t:'learn'},{l:'Yoga/Dehnen', t:'rest'}] },
+      { name: 'Mi', tasks: [{l:'Letzte Übungsfragen', t:'exam'},{l:'Schwimmen locker', t:'sport'}] },
+      { name: 'Do', tasks: [{l:'Mentale Vorbereitung', t:'learn'},{l:'Spaziergang', t:'rest'}] },
+      { name: 'Fr', tasks: [{l:'Kurze Wiederholung', t:'learn'},{l:'Früh schlafen', t:'rest'}] },
+      { name: 'Sa', tasks: [{l:'Kein Lernen!', t:'rest'},{l:'Entspannen', t:'rest'}] },
+      { name: 'So', tasks: [{l:'🎯 MED-AT TAG!', t:'exam'}] },
+    ]
+  },
+];
+
+// ---- STATE ----
+function getState() {
+  try {
+    const s = localStorage.getItem('medat_state');
+    return s ? JSON.parse(s) : { done: {}, streak: 0, lastDate: null };
+  } catch(e) { return { done: {}, streak: 0, lastDate: null }; }
+}
+
+function saveState(s) {
+  try { localStorage.setItem('medat_state', JSON.stringify(s)); } catch(e) {}
+}
+
+let state = getState();
+
+// Check if new day → reset
+function checkNewDay() {
+  const today = new Date().toDateString();
+  if (state.lastDate && state.lastDate !== today) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const wasYesterday = state.lastDate === yesterday.toDateString();
+    const doneCount = Object.values(state.done).filter(Boolean).length;
+    if (wasYesterday && doneCount >= 8) {
+      state.streak = (state.streak || 0) + 1;
+    } else if (!wasYesterday) {
+      state.streak = 0;
+    }
+    state.done = {};
+    state.lastDate = today;
+    saveState(state);
+  } else if (!state.lastDate) {
+    state.lastDate = today;
+    saveState(state);
+  }
+}
+
+// ---- COUNTDOWN ----
+function updateCountdown() {
+  const target = new Date('2025-07-03T08:00:00');
+  const now = new Date();
+  const diff = target - now;
+  if (diff <= 0) {
+    document.getElementById('countdownBadge').textContent = '🎯 HEUTE!';
+    return;
+  }
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  document.getElementById('countdownBadge').textContent = `⏳ ${days} Tage`;
+}
+
+function updateDate() {
+  const d = new Date();
+  const opts = { weekday: 'long', day: 'numeric', month: 'long' };
+  document.getElementById('dateLabel').textContent = d.toLocaleDateString('de-AT', opts);
+}
+
+// ---- RENDER BLOCKS ----
+function renderBlocks() {
+  const container = document.getElementById('blocksContainer');
+  container.innerHTML = '';
+  routineBlocks.forEach(b => {
+    const isDone = state.done[b.id];
+    const div = document.createElement('div');
+    div.className = `time-block${b.cat ? ' category-' + b.cat : ''}${isDone ? ' done' : ''}`;
+    div.onclick = () => toggleBlock(b.id);
+    div.innerHTML = `
+      <span class="block-time">${b.time}</span>
+      <span class="block-emoji">${b.emoji}</span>
+      <div class="block-content">
+        <div class="block-title">${b.title}</div>
+        <div class="block-sub">${b.sub}</div>
+      </div>
+      <div class="check-circle">${isDone ? '✓' : ''}</div>
+    `;
+    container.appendChild(div);
+  });
+  updateStats();
+}
+
+function toggleBlock(id) {
+  state.done[id] = !state.done[id];
+  saveState(state);
+  renderBlocks();
+}
+
+function resetDay() {
+  if (confirm('Tagesfortschritt zurücksetzen?')) {
+    state.done = {};
+    saveState(state);
+    renderBlocks();
+  }
+}
+
+function updateStats() {
+  const total = routineBlocks.length;
+  const done = Object.values(state.done).filter(Boolean).length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('dailyProgress').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done} / ${total} erledigt`;
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statLeft').textContent = total - done;
+  document.getElementById('statStreak').textContent = state.streak || 0;
+}
+
+// ---- RENDER WEEKS ----
+function renderWeeks() {
+  const container = document.getElementById('weeksContainer');
+  container.innerHTML = '';
+  weeksData.forEach((w, i) => {
+    const card = document.createElement('div');
+    card.className = `week-card${w.current ? ' current' : ''}`;
+    const daysHtml = w.days.map(d => `
+      <div class="day-row">
+        <span class="day-name">${d.name}</span>
+        <div class="day-tasks">
+          ${d.tasks.map(t => `<span class="day-tag tag-${t.t}">${t.l}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+    card.innerHTML = `
+      <div class="week-header" onclick="toggleWeek(${i})">
+        <div class="week-title-row">
+          <span class="week-num">W${w.num}</span>
+          <div class="week-info">
+            <h3>${w.title}</h3>
+            <span class="week-dates">${w.dates}</span>
+          </div>
+        </div>
+        <span class="week-badge">${w.current ? '← JETZT' : `Woche ${w.num}`}</span>
+      </div>
+      <div class="week-body${w.current ? ' open' : ''}" id="week-${i}">
+        <div class="week-focus">${w.focus}</div>
+        <div class="day-plan">${daysHtml}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function toggleWeek(i) {
+  const body = document.getElementById('week-' + i);
+  body.classList.toggle('open');
+}
+
+// ---- TABS ----
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  const tabs = ['routine','weeks','focus'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+}
+
+// ---- INIT ----
+checkNewDay();
+updateCountdown();
+updateDate();
+renderBlocks();
+renderWeeks();
+setInterval(updateCountdown, 60000);
+</script>
+</body>
+</html>
